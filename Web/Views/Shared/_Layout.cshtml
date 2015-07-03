@@ -1,0 +1,61 @@
+﻿@using System.Web.Optimization
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title - IS</title>
+    <link href="~/Content/images/line_chart.ico" rel="shortcut icon" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
+    @Styles.Render("~/Content/bootstrap")
+    <!--[if lt IE 9]>
+            <script src="~/Scripts/html5shiv.min.js"></script>
+            <script src="~/Scripts/respond.min.js"></script>
+        <![endif]-->
+    @Styles.Render("~/Content/css")
+</head>
+<body>
+    <div class="navbar navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <div class="navbar-brand">IS</div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-3 col-md-2 sidebar">
+                <ul class="nav nav-sidebar">
+                    <li>@Html.MenuLink("Monitor", "Index", "Home")</li>
+                </ul>
+                
+                <div class="text-muted">Manage Destination</div>
+                <ul class="nav nav-sidebar">
+                    <li>@Html.MenuLink("Groups", "Index", "Group")</li>
+                    <li>@Html.MenuLink("Destinations", "Index", "Site")</li>
+                </ul>
+                
+                <div class="text-muted">Manage User</div>
+                <ul class="nav nav-sidebar">
+                    <li>@Html.MenuLink("Roles", "Index", "Role")</li>
+                    <li>@Html.MenuLink("Users", "Index", "User")</li>
+                </ul>
+                
+                <ul class="nav nav-sidebar">
+                    <li><a href="#">Jobs</a></li>
+                    <li><a href="#">Reports</a></li>
+                </ul>
+            </div>
+            <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+    <script>window.baseUrl = '@Url.Content("~/")';</script>
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/knockout")
+    @Scripts.Render("~/bundles/bootstrap")
+    @Scripts.Render("~/bundles/common")
+    @RenderSection("scripts", required: false)
+</body>
+</html>

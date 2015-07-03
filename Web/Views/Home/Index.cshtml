@@ -1,0 +1,226 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<style>
+    .table {
+        width: 100%;
+    }
+
+        .table > thead {
+            background-color: bisque;
+        }
+
+    .title {
+        font-size: 16px;
+        font-weight: 800;
+    }
+
+    tr.header {
+        cursor: pointer;
+        background-color: #ccc;
+        text-transform: uppercase;
+    }
+
+    .header .sign:after {
+        content: "+";
+    }
+
+    .header.expand .sign:after {
+        content: "-";
+    }
+
+    .dn {
+        color: #a94442;
+        background-color: #f2dede;
+    }
+
+    .up {
+        color: #3c763d;
+        background-color: #dff0d8;
+    }
+</style>
+
+<div class="row">
+    <div class="col-md-10">
+        <div class="row">
+            Status <select data-bind="options: statuss, value: status"></select>
+            Protocal Type <select data-bind="options: types, value: type"></select>
+            Retrive Interval <select data-bind="options: intervals, value: interval"></select>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Last Update</th>
+                    <th>Office</th>
+                    <th>Status</th>
+                    <th>Code</th>
+                    <th class="text-left">Name</th>
+                    <th class="text-left">Ip</th>
+                    <th>Isp</th>
+                    <th>Type</th>
+                    <th>Phone</th>
+                    <th>Job</th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: siteGroups">
+                <tr class="header expand" data-bind="collapse: ''">
+                    <td colspan="10" class="text-left"><span class="sign"></span> <span data-bind="text: group"></span></td>
+                </tr>
+                <!-- ko foreach: sites -->
+                <tr data-bind="css: { up: status == 'Up', dn: status == 'Dn' }, click: function() { $root.getDowntimes($data) }" data-toggle="modal" data-target=".modal">
+                    <td style="width: 10%" data-bind="date: lastUpdate, format: 'DD/MM/YYYY HH:mm'"></td>
+                    <td style="width: 10%" data-bind="text: office"></td>
+                    <td style="width: 5%" data-bind="text: status"></td>
+                    <td style="width: 10%" data-bind="text: code"></td>
+                    <td style="width: 20%" data-bind="text: name" class="text-left"></td>
+                    <td style="width: 10%" data-bind="text: ip" class="text-left"></td>
+                    <td style="width: 5%" data-bind="text: isp"></td>
+                    <td style="width: 10%" data-bind="text: type"></td>
+                    <td style="width: 15%" data-bind="text: phone"></td>
+                    <td style="width: 5%"></td>
+                </tr>
+                <!-- /ko -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-md-2">
+        <p class="text-center text-danger title">Top 10 Failed</p>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th class="text-left">Code</th>
+                    <th>Down</th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: siteFaileds">
+                <tr class="dn">
+                    <td data-bind="text: site.code" class="text-left"></td>
+                    <td data-bind="text: downCount"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" data-bind="text: siteSelected"></h4>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>DownTime</th>
+                            <th>UpTime</th>
+                            <th>Duration(Minutes)</th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: downtimes">
+                        <tr class="dn">
+                            <td data-bind="date: downTime, format: 'DD/MM/YYYY HH:mm'"></td>
+                            <td data-bind="date: upTime, format: 'DD/MM/YYYY HH:mm'"></td>
+                            <td data-bind="text: durationTime"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts
+{
+    <script>
+        var tmp = [];
+        ko.bindingHandlers.collapse = {
+            init: function(element) {
+                $(element).on('click', function() {
+                    $(this).toggleClass('expand').nextUntil('tr.header').toggle();
+                    tmp[$('.header').index(element)] = $(this).hasClass('expand');
+                });
+            },
+            update: function(element) {
+                if (!tmp[$('.header').index(element)]) {
+                    $(element).click();
+                }
+            }
+        };
+
+        var ViewModel = function() {
+            var self = this;
+            self.siteGroups = ko.observableArray([]);
+            self.siteFaileds = ko.observableArray([]);
+            self.siteSelected = ko.observable();
+            self.downtimes = ko.observableArray([]);
+
+            self.statuss = ['ALL', 'UP', 'DN'];
+            self.types = ['ALL', 'PING', 'SNMP'];
+            self.intervals = ['NONE', 15, 30, 60, 90, 120];
+            self.status = ko.observable('ALL');
+            self.type = ko.observable('ALL');
+            self.interval = ko.observable(15);
+
+            var firstLoad = true;
+
+            getMonitor();
+
+            var interval = setInterval(getMonitor, self.interval() * 1000);
+
+            function getMonitor() {
+                http.get(window.baseUrl + 'Home/GetMonitor', function(model) {
+                    self.siteGroups(model.siteGroups);
+                    self.siteFaileds(model.siteFaileds);
+                    filter(self.type(), self.status());
+                    firstLoad = false;
+                }, firstLoad);
+            }
+
+            self.getDowntimes = function(site) {
+                http.get(window.baseUrl + 'Home/GetDowntimesBySiteId?siteId=' + site.id, function(model) {
+                    self.siteSelected(site.code + ':' + site.name);
+                    self.downtimes(model);
+                }, true);
+            };
+
+            self.status.subscribe(function (value) {
+                filter(self.type(), value);
+            });
+
+            self.type.subscribe(function(value) {
+                filter(value, self.status());
+            });
+
+            function filter(type, status) {
+                $('table:eq(0) tr').each(function () {
+                    var tr = $(this);
+                    if (!tr.hasClass('header')) {
+                        var s = tr.find('td:eq(2)').text();
+                        var t = tr.find('td:eq(7)').text();
+                        var sFilter, tFilter;
+
+                        if (status == 'ALL') sFilter = self.statuss; else sFilter = [status];
+                        if (type == 'ALL') tFilter = self.types; else tFilter = [type];
+
+                        if (sFilter.indexOf(s.toUpperCase()) > -1 && tFilter.indexOf(t.toUpperCase()) > -1) tr.show(); else tr.hide();
+                    }
+                });
+            }
+
+            self.interval.subscribe(function(value) {
+                clearInterval(interval);
+                if (value != 'NONE') {
+                    interval = setInterval(getMonitor, value * 1000);
+                }
+            });
+        };
+
+        var vm = new ViewModel();
+        ko.applyBindings(vm);
+    </script>
+}

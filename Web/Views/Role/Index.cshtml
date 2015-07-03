@@ -1,0 +1,35 @@
+﻿@using Domain.Entities
+@model IEnumerable<Role>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Roles</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table">
+    <tr>
+        <th class ="text-left">
+            @Html.DisplayNameFor(model => model.Name)
+        </th>
+        <th></th>
+    </tr>
+
+@foreach (var item in Model) {
+    var item1 = item;
+    <tr>
+        <td class="text-left">   
+            @Html.DisplayFor(modelItem => item1.Name)
+        </td>
+        <td>
+            @Html.ActionLink("Edit", "Edit", new { id = item1.Id }) |
+            @Html.ActionLink("Details", "Details", new { id = item1.Id }) |
+            @Html.ActionLink("Delete", "Delete", new { id = item1.Id })
+        </td>
+    </tr>
+}
+
+</table>
